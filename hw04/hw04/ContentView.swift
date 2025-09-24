@@ -26,17 +26,18 @@ struct cupPong: View {
     @State private var currentScale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
     
+    //Sets up animation features
+    @State private var pulse = false
+    @State private var smileBounce = false
+    
     //Initialize background color (can handle color and gradients)
     @State private var background: AnyView = AnyView(
         LinearGradient(
-            gradient: Gradient(colors: [.white, .blue]),
+            gradient: Gradient(colors: [.green, .mint]),
             startPoint: .top,
             endPoint: .bottom
         )
     )
-
-    
-    
 
     var body: some View{
         ZStack{
@@ -44,12 +45,16 @@ struct cupPong: View {
                 .ignoresSafeArea()
             
             ZStack{
-                
-                Text("Mood Map")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .italic()
-                    .padding()
+                VStack{
+                    Text("Mood Map")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .italic()
+                        .padding()
+                    Text("Click and swipe to design your mood board!")
+                        .font(.caption)
+                        .italic()
+                }
                 
                 // For every ball position index, create a red ball
                 ForEach(smilePosition.indices, id: \.self){index in
@@ -59,6 +64,13 @@ struct cupPong: View {
                         .frame(width:50, height:50)
                         .foregroundColor(.pink)
                         .position(smilePosition[index])
+                        .scaleEffect(smileBounce ? 1.2 : 1.0)
+                        .animation(
+                            Animation
+                                .interpolatingSpring(stiffness: 200, damping: 5)
+                                .repeatForever(autoreverses: true),
+                            value: smileBounce
+                        )
                 }
                 
                 // For every obstacle position index, create a caution sign
@@ -69,6 +81,16 @@ struct cupPong: View {
                         .frame(width: 40, height: 40)
                         .foregroundColor(.orange)
                         .position(angryPosition[index])
+                        .scaleEffect(pulse ? 1.2 : 1.0)
+                        .animation(
+                            Animation
+                                .easeIn(duration: 0.6)
+                                .repeatForever(autoreverses: true),
+                            value: pulse
+                        )
+                        .onAppear {
+                            pulse = true
+                        }
                 }
        /*
                 ForEach(genPositions.indices, id: \.self){index in
@@ -106,7 +128,7 @@ struct cupPong: View {
                             // Swipe Left: Pink → Orange
                             background = AnyView(
                                 LinearGradient(
-                                    gradient: Gradient(colors: [.pink, .orange]),
+                                    gradient: Gradient(colors: [.mint, .mint]),
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -115,7 +137,7 @@ struct cupPong: View {
                             // Swipe Right:
                             background = AnyView(
                                 LinearGradient(
-                                    gradient: Gradient(colors: [.white, .green]),
+                                    gradient: Gradient(colors: [.green, .green]),
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -141,17 +163,29 @@ struct cupPong: View {
                     genPositions.removeAll()
                 }
         )
-        // when the screen is single tapped, add location of tap to ball position array
+        // when the screen is single tapped, add location of tap to smile position array
         .onTapGesture { location in
             smilePosition.append(location)
+            smileBounce = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                smileBounce = true
+            }
         }
-        // when screen is double tapped, add location of tap to obstacle position array
+        // when screen is double tapped, add location of tap to angrey position array
         .onTapGesture(count: 2) { location in
             angryPosition.append(location)
+            pulse = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                pulse = true
+            }
         }
-        // when screen is triple tapped, add location of tap to toy position array
+        // when screen is triple tapped, add location of tap to gen position array
         .onTapGesture(count: 3) { location in
             genPositions.append(location)
+        }
+        // Trigger smileBounce animation once on appear
+        .onAppear {
+            smileBounce = true
         }
     }
 }
